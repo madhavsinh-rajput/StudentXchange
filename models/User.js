@@ -6,7 +6,9 @@ const userSchema = new mongoose.Schema({
   collegeId: { type: String, required: true, unique: true, trim: true },
   password: { type: String, required: true, select: false },
   department: { type: String, trim: true, default: '' },
-  semester: { type: String, trim: true, default: '' }
+  semester: { type: String, trim: true, default: '' },
+  profileImage: { type: String, trim: true, default: '' },
+  bio: { type: String, trim: true, maxlength: 200, default: '' }
 }, { timestamps: { createdAt: true, updatedAt: false } });
 
 module.exports = mongoose.model('User', userSchema);

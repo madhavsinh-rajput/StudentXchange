@@ -1,8 +1,34 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 
 const router = express.Router();
+
+router.get('/:id', async (req, res, next) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ message: 'Invalid user id.' });
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found.' });
+    res.json(publicUser(user));
+  } catch (error) { next(error); }
+});
+
+router.put('/:id', async (req, res, next) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ message: 'Invalid user id.' });
+    const fields = ['name', 'collegeId', 'department', 'semester', 'profileImage', 'bio'];
+    const body = req.body || {};
+    const updates = Object.fromEntries(fields.filter(field => Object.prototype.hasOwnProperty.call(body, field)).map(field => [field, body[field]]));
+    const user = await User.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
+    if (!user) return res.status(404).json({ message: 'User not found.' });
+    res.json(publicUser(user));
+  } catch (error) {
+    if (error.name === 'ValidationError' || error.name === 'CastError') return res.status(400).json({ message: error.message });
+    if (error.code === 11000) return res.status(409).json({ message: 'College ID is already registered.' });
+    next(error);
+  }
+});
 
 router.post('/register', async (req, res, next) => {
   try {
@@ -49,6 +75,8 @@ function publicUser(user) {
     collegeId: user.collegeId,
     department: user.department,
     semester: user.semester,
+    profileImage: user.profileImage || '',
+    bio: user.bio || '',
     createdAt: user.createdAt
   };
 }
